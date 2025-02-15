@@ -1,0 +1,48 @@
+name: EventHorizons
+version: '${version}'
+main: io.github.tootertutor.eventhorizons.EventHorizons
+api-version: '1.21'
+load: STARTUP
+authors: [TooterTutor]
+description: Dynamic item system for Paper servers
+commands:
+  eh:
+    description: Main command for EventHorizons plugin
+    usage: |
+      /eh give <player> <item> <amount> - Give a player an item
+      /eh lore <line> <lore> [color] - Set the lore of an item
+      /eh name <name> [color] - Set the name of an item
+      /eh meta <set|remove> <meta> [value] - Set item meta
+      /eh dump - Dump item information
+    aliases: [eventhorizons]
+    permission: eventhorizons.command
+    permission-message: You do not have permission to use this command.
+
+permissions:
+  eventhorizons.*:
+    description: Gives access to all EventHorizons commands
+    children:
+      eventhorizons.command: true
+      eventhorizons.give: true
+      eventhorizons.lore: true
+      eventhorizons.name: true
+      eventhorizons.meta: true
+      eventhorizons.dump: true
+  eventhorizons.command:
+    description: Allows access to the base EventHorizons command
+    default: op
+  eventhorizons.give:
+    description: Allows giving items to players
+    default: op
+  eventhorizons.lore:
+    description: Allows modifying item lore
+    default: op
+  eventhorizons.name:
+    description: Allows modifying item names
+    default: op
+  eventhorizons.meta:
+    description: Allows modifying item meta
+    default: op
+  eventhorizons.dump:
+    description: Allows dumping item information
+    default: op

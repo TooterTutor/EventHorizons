@@ -1,0 +1,127 @@
+package io.github.tootertutor.eventhorizons.builders;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
+
+import io.github.tootertutor.eventhorizons.handlers.ItemTextHandler;
+import io.github.tootertutor.eventhorizons.items.Item;
+
+public class ItemBuilder {
+    private Plugin plugin;
+    private NamespacedKey key;
+    private String displayName;
+    private Material material;
+    private ItemStack itemStack;
+    private List<String> lore = new ArrayList<>();
+    private String nameColor = "#FFF";
+    private List<String> loreColor = new ArrayList<>();
+    private final Map<String, Recipe> recipes;
+    private ItemMeta itemMeta;
+    private final ItemDataBuilder dataBuilder;
+
+    public ItemBuilder(Plugin plugin) {
+        this.plugin = plugin;
+        this.dataBuilder = new ItemDataBuilder(plugin);
+        this.recipes = new HashMap<>();
+    }
+
+    public ItemBuilder setKey(NamespacedKey key) {
+        this.key = key;
+        return this;
+    }
+
+    public ItemBuilder setDisplayName(String name) {
+        this.displayName = name;
+        return this;
+    }
+
+    public ItemBuilder setMaterial(Material item) {
+        this.material = item;
+        this.itemStack = new ItemStack(item);
+        if (itemStack.hasItemMeta()) {
+            this.itemMeta = itemStack.getItemMeta();
+        }
+        return this;
+    }
+
+    public ItemBuilder setLore(List<String> lore) {
+        this.lore = new ArrayList<>(lore);
+        return this;
+    }
+
+    public ItemBuilder setNameColor(String nameColor) {
+        this.nameColor = nameColor;
+        return this;
+    }
+
+    public ItemBuilder setLoreColor(List<String> loreColor) {
+        this.loreColor = new ArrayList<>(loreColor);
+        return this;
+    }
+
+    public ItemBuilder addPersistentData(String key, byte value) {
+        if (itemStack != null && itemStack.getItemMeta() != null) {
+            dataBuilder.setByte(key, value);
+        }
+        return this;
+    }
+
+    public ItemBuilder addPersistentData(String key, String value) {
+        if (itemStack != null && itemStack.getItemMeta() != null) {
+            dataBuilder.setString(key, value);
+        }
+        return this;
+    }
+
+    public ItemBuilder addPersistentData(String key, int value) {
+        if (itemStack != null && itemStack.getItemMeta() != null) {
+            dataBuilder.setInt(key, value);
+        }
+        return this;
+    }
+
+    public ItemBuilder addPersistentData(String key, boolean value) {
+        if (itemStack != null && itemStack.getItemMeta() != null) {
+            dataBuilder.setBoolean(key, value);
+        }
+        return this;
+    }
+
+    public ItemBuilder addRecipe(String key, Recipe recipe) {
+        this.recipes.put(key, recipe);
+        return this;
+    }
+
+    public ItemStack buildItemStack() {
+        itemStack = new ItemStack(material);
+        itemMeta = itemStack.getItemMeta();
+
+        if (itemMeta != null) {
+            ItemTextHandler textHandler = new ItemTextHandler(itemStack);
+            textHandler.setDisplayName(displayName, nameColor);
+
+            if (lore != null) {
+                textHandler.setLoreFromStrings(lore); // This will call the String version
+            }
+
+            itemStack.setItemMeta(itemMeta);
+        }
+
+        return itemStack;
+    }
+
+    public Item buildCustomItem() {
+        itemStack = buildItemStack();
+
+        return new (plugin, key);
+    }
+}
