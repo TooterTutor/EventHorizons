@@ -1,5 +1,6 @@
 package io.github.tootertutor.eventhorizons.commands;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +29,9 @@ public class CommandBuilder {
         String subCommand = args[0].toLowerCase();
         CommandExecutor executor = commands.get(subCommand);
         if (executor != null) {
-            return executor.onCommand(sender, command, label, args);
+            // Remove the subcommand from the args array
+            String[] newArgs = Arrays.copyOfRange(args, 1, args.length);
+            return executor.onCommand(sender, command, label, newArgs);
         }
         return false; // Command not found
     }

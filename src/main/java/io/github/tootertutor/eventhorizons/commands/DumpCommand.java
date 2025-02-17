@@ -1,15 +1,20 @@
 package io.github.tootertutor.eventhorizons.commands;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public class DumpCommand implements CommandExecutor {
     private final Plugin plugin;
@@ -42,17 +47,72 @@ public class DumpCommand implements CommandExecutor {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             if (meta.hasDisplayName()) {
-                sender.sendMessage(Component.text("Display Name: " + meta.displayName(), NamedTextColor.YELLOW));
+                Component displayName = meta.displayName();
+                String color = getComponentColor(displayName);
+                Component message = Component.text("Display Name: ", NamedTextColor.YELLOW)
+                        .append(Component.text(PlainTextComponentSerializer.plainText().serialize(displayName)));
+
+                if (color != null) {
+                    message = message.append(Component.text(", "))
+                            .append(createColoredSquare(color))
+                            .append(Component.text(" " + color));
+                }
+
+                sender.sendMessage(message);
             }
 
             if (meta.hasLore()) {
                 sender.sendMessage(Component.text("Lore:", NamedTextColor.YELLOW));
-                meta.lore().forEach(line -> sender.sendMessage(Component.text("- " + line, NamedTextColor.GRAY)));
+                meta.lore().forEach(line -> {
+                    String color = getComponentColor(line);
+                    Component message = Component.text("- ", NamedTextColor.GRAY)
+                            .append(Component.text(PlainTextComponentSerializer.plainText().serialize(line)));
+
+                    if (color != null) {
+                        message = message.append(Component.text(", "))
+                                .append(createColoredSquare(color))
+                                .append(Component.text(" " + color));
+                    }
+
+                    sender.sendMessage(message);
+                });
             }
 
-            // Additional meta data can be dumped here if needed
+            // Dump metadata
+            PersistentDataContainer container = meta.getPersistentDataContainer();
+            if (!container.getKeys().isEmpty()) {
+                sender.sendMessage(Component.text("Metadata:", NamedTextColor.YELLOW));
+                for (NamespacedKey key : container.getKeys()) {
+                    Byte value = container.get(key, PersistentDataType.BYTE);
+                    if (value != null) {
+                        sender.sendMessage(
+                                Component.text("- " + key.getKey() + ": " + value + " (Byte)", NamedTextColor.GRAY));
+                    }
+                }
+            }
         }
 
         return true;
+    }
+
+    private String getComponentColor(Component component) {
+        if (component.color() != null) {
+            return "#" + String.format("%06X", component.color().value());
+        }
+        return null;
+    }
+
+    private Component createColoredSquare(String hexColor) {
+        if (hexColor != null) {
+            // Convert 3-digit hex to 6-digit if needed
+            if (hexColor.length() == 4) {
+                String r = hexColor.substring(1, 2);
+                String g = hexColor.substring(2, 3);
+                String b = hexColor.substring(3, 4);
+                hexColor = "#" + r + r + g + g + b + b;
+            }
+            return Component.text("■").color(TextColor.fromHexString(hexColor));
+        }
+        return null;
     }
 }

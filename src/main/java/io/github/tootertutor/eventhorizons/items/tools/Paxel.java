@@ -9,25 +9,24 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
-import io.github.tootertutor.eventhorizons.builders.ItemDataBuilder;
+import io.github.tootertutor.eventhorizons.interfaces.IInvAction;
 import io.github.tootertutor.eventhorizons.items.Item;
-import io.github.tootertutor.eventhorizons.items.interfaces.IInvAction;
 import io.papermc.paper.event.player.PlayerPickItemEvent;
 import net.kyori.adventure.text.Component;
 
 /**
  * A Special Multi-tool that swaps to the tool best suited to mine a block.
  */
-public class Paxel extends Item implements IInvAction {
+public class Paxel extends Item implements IInvAction, Listener {
 
     private final Set<Material> pickaxeBlocks = getMaterials(Tag.MINEABLE_PICKAXE);
     private final Set<Material> axeBlocks = getMaterials(Tag.MINEABLE_AXE);
@@ -44,34 +43,10 @@ public class Paxel extends Item implements IInvAction {
         super.nameColor = "#33FFBB";
         super.lore = Arrays.asList("The True Multi-Tool", "Automatically switches to the right tool",
                 "for the job!");
-        super.loreColor = Arrays.asList("#00FFAA", "#00FFAA", "#00FFAA");
+        super.loreColor = Arrays.asList("#00BBCC", "#00BBCC", "#00BBCC");
         super.material = Material.DIAMOND_PICKAXE;
         super.itemStack = new ItemStack(material);
-        ItemMeta itemMeta = itemStack.getItemMeta();
-
-        // Set persistent data using ItemDataBuilder
-        ItemDataBuilder itemDataBuilder = new ItemDataBuilder(itemMeta, plugin);
-        itemDataBuilder.setByte(getId().getKey(), (byte) 1); // Example of setting a byte value
-
-        // "Paxel", Material.DIAMOND_PICKAXE,
-        // Arrays.asList("The True Multi-Tool", "Automatically switches to the right
-        // tool", "for the job!"),
-        // "#33FFBB", Arrays.asList("#00FFAA", "#00FFAA", "#00FFAA"),
-        // Paxel.getItemMeta(plugin, Material.DIAMOND_PICKAXE), new HashMap<>()
-        /*
-         * plugin.getLogger().info("Initializing getItemMeta");
-         * ItemStack itemStack = new ItemStack(material);
-         * ItemMeta meta = itemStack.getItemMeta();
-         * ItemTextHandler textHandler = new ItemTextHandler(itemStack);
-         * textHandler.setDisplayName("Paxel");
-         * textHandler.setLoreFromStrings(
-         * Arrays.asList("The True Multi-Tool",
-         * "Automatically switches to the right tool",
-         * "for the job!"));
-         * // Set the meta back to the item stack
-         * itemStack.setItemMeta(meta);
-         * return meta;
-         */
+        applyMetadata();
     }
 
     /**

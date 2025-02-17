@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import io.github.tootertutor.eventhorizons.builders.ItemDataBuilder;
@@ -24,30 +25,20 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public abstract class Item implements Keyed {
     protected final Plugin plugin;
-    // private String id;
     protected String displayName;
     protected Material material;
     protected List<String> lore;
-    protected String nameColor; // Ensure this field is defined only once
+    protected String nameColor;
     protected List<String> loreColor;
     protected ItemDataBuilder itemDataBuilder;
     protected Map<String, Recipe> recipes;
     protected ItemStack itemStack;
     protected ItemTextHandler textHandler;
-    protected NamespacedKey key; // Add NamespacedKey field
+    protected NamespacedKey key;
 
     protected Item(Plugin plugin, NamespacedKey key) {
         this.plugin = plugin;
         this.key = key;
-        // this.displayName = displayName;
-        // this.material = material;
-        // this.lore = lore;
-        // this.nameColor = nameColor;
-        // this.loreColor = loreColor;
-        // this.itemDataBuilder = new ItemDataBuilder(itemMeta, plugin);
-        // this.recipes = recipes != null ? recipes : new HashMap<>();
-        // this.itemStack = new ItemStack(material);
-        // this.textHandler = new ItemTextHandler(this.itemStack);
         updateItemText();
     }
 
@@ -55,7 +46,7 @@ public abstract class Item implements Keyed {
         this.plugin = plugin;
         this.itemStack = itemStack;
         ItemMeta meta = itemStack.getItemMeta();
-        this.key = new NamespacedKey(plugin, itemStack.getType().name().toLowerCase()); // Initialize NamespacedKey
+        this.key = new NamespacedKey(plugin, itemStack.getType().name().toLowerCase());
         this.material = itemStack.getType();
 
         if (meta != null) {
@@ -86,13 +77,11 @@ public abstract class Item implements Keyed {
         updateItemText();
     }
 
-    // Implement getKey() method from Keyed interface
     @Override
     public NamespacedKey getKey() {
         return key;
     }
 
-    // New method to get the ID of the item
     public NamespacedKey getId() {
         return key;
     }
@@ -101,14 +90,55 @@ public abstract class Item implements Keyed {
         return displayName;
     }
 
-    // Item management methods
     public Material getMaterial() {
         return material;
     }
 
     public ItemStack getItemStack() {
-        updateItemText();
-        return itemStack.clone();
+        applyMetadata();
+        return itemStack;
+    }
+
+    /**
+     * Applies the item's metadata (display name, lore, and persistent data) to the ItemStack
+     */
+    protected void applyMetadata() {
+        if (itemStack == null) {
+            return;
+        }
+        
+        ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+
+        // Apply display name
+        if (displayName != null && nameColor != null) {
+            meta.displayName(Component.text(displayName)
+                .color(TextColor.fromHexString(nameColor)));
+        }
+
+        // Apply lore
+        if (lore != null && !lore.isEmpty()) {
+            List<Component> loreComponents = new ArrayList<>();
+            for (int i = 0; i < lore.size(); i++) {
+                String color = (loreColor != null && i < loreColor.size()) ? loreColor.get(i) : "#FFFFFF";
+                loreComponents.add(Component.text(lore.get(i))
+                    .color(TextColor.fromHexString(color)));
+            }
+            meta.lore(loreComponents);
+        }
+
+        // Apply persistent data
+        if (itemDataBuilder != null) {
+            for (NamespacedKey key : itemDataBuilder.build().getKeys()) {
+                byte value = itemDataBuilder.build().get(key, PersistentDataType.BYTE);
+                meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, value);
+            }
+
+        }
+
+        itemStack.setItemMeta(meta);
     }
 
     public List<String> getLore() {
@@ -131,18 +161,9 @@ public abstract class Item implements Keyed {
         return textHandler;
     }
 
+    @Deprecated
     public void updateItemText() {
-        if (textHandler != null) {
-            textHandler.setDisplayName(displayName, nameColor);
-            List<Component> loreComponents = new ArrayList<>();
-            for (int i = 0; i < lore.size(); i++) {
-                String loreLine = lore.get(i);
-                String color = i < loreColor.size() ? loreColor.get(i) : "#FFFFFF";
-                Component component = Component.text(loreLine).color(TextColor.fromHexString(color));
-                loreComponents.add(component);
-            }
-            setLore(loreComponents);
-        }
+        applyMetadata();
     }
 
     public void setDisplayName(String name) {
@@ -172,7 +193,7 @@ public abstract class Item implements Keyed {
             lore.set(index, text);
             String color = index < loreColor.size() ? loreColor.get(index) : "#FFFFFF";
             textHandler.updateLoreLine(index,
-                    Component.text(text).color(net.kyori.adventure.text.format.TextColor.fromHexString(color)));
+                    Component.text(text).color(TextColor.fromHexString(color)));
         }
     }
 
@@ -185,11 +206,10 @@ public abstract class Item implements Keyed {
                 loreColor.add(color);
             }
             textHandler.updateLoreLine(index,
-                    Component.text(text).color(net.kyori.adventure.text.format.TextColor.fromHexString(color)));
+                    Component.text(text).color(TextColor.fromHexString(color)));
         }
     }
 
-    // Recipe management methods
     public void addRecipe(String key, Recipe recipe) {
         recipes.put(key, recipe);
         if (plugin.isEnabled()) {
@@ -212,7 +232,6 @@ public abstract class Item implements Keyed {
         return new ArrayList<>(recipes.values());
     }
 
-    // PersistentDataContainer methods
     public boolean has(String key) {
         return itemDataBuilder.hasByte(key);
     }

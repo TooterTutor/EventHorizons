@@ -29,6 +29,7 @@ public class EHCommand implements CommandExecutor, TabCompleter {
         commandBuilder.registerCommand("name", new NameCommand(plugin));
         commandBuilder.registerCommand("meta", new MetaCommand(plugin));
         commandBuilder.registerCommand("dump", new DumpCommand(plugin));
+        // commandBuilder.registerCommand("world", new WorldCommand(plugin));
     }
 
     @Override
@@ -43,7 +44,8 @@ public class EHCommand implements CommandExecutor, TabCompleter {
         List<String> completions = new ArrayList<>();
 
         if (args.length == 1) {
-            String[] subCommands = { "give", "lore", "name", "meta", "dump" };
+            // String[] subCommands = { "give", "lore", "name", "meta", "dump", "world" };
+            String[] subCommands = { "give", "lore", "name", "meta", "dump"};
             return filterCompletions(subCommands, args[0]);
         }
 
@@ -53,6 +55,8 @@ public class EHCommand implements CommandExecutor, TabCompleter {
                     return null; // Return null to show online players
                 case "meta":
                     return filterCompletions(new String[] { "set", "remove" }, args[1]);
+                // case "world":
+                //     return filterCompletions(new String[] { "create", "delete", "teleport" }, args[1]);
             }
         }
 
@@ -63,9 +67,12 @@ public class EHCommand implements CommandExecutor, TabCompleter {
                             .map(item -> item.getId().getKey()) // Use getId() to get item identifiers as String
                             .filter(id -> id.toLowerCase().startsWith(args[2].toLowerCase()))
                             .collect(Collectors.toList());
+                // case "world":
+                //     if (args[1].equalsIgnoreCase("create")) {
+                //         return filterCompletions(new String[] { "flat", "normal", "void" }, args[2]);
+                //     }
             }
         }
-
         return completions;
     }
 

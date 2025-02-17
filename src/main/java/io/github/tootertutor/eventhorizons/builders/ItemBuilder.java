@@ -13,11 +13,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
 import io.github.tootertutor.eventhorizons.handlers.ItemTextHandler;
-import io.github.tootertutor.eventhorizons.items.Item;
 
 public class ItemBuilder {
-    private Plugin plugin;
-    private NamespacedKey key;
     private String displayName;
     private Material material;
     private ItemStack itemStack;
@@ -29,13 +26,11 @@ public class ItemBuilder {
     private final ItemDataBuilder dataBuilder;
 
     public ItemBuilder(Plugin plugin) {
-        this.plugin = plugin;
         this.dataBuilder = new ItemDataBuilder(plugin);
         this.recipes = new HashMap<>();
     }
 
     public ItemBuilder setKey(NamespacedKey key) {
-        this.key = key;
         return this;
     }
 
@@ -117,11 +112,5 @@ public class ItemBuilder {
         }
 
         return itemStack;
-    }
-
-    public Item buildCustomItem() {
-        itemStack = buildItemStack();
-
-        return new (plugin, key);
     }
 }

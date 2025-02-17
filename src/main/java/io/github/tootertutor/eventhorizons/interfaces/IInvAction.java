@@ -1,4 +1,4 @@
-package io.github.tootertutor.eventhorizons.items.interfaces;
+package io.github.tootertutor.eventhorizons.interfaces;
 
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;

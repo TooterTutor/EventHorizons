@@ -1,5 +1,6 @@
 package io.github.tootertutor.eventhorizons;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -51,6 +52,7 @@ public final class EventHorizons extends JavaPlugin {
     public void registerToolItems() {
         Paxel paxel = new Paxel(this);
         itemRegistry.registerItem(paxel.getId(), paxel);
+        Bukkit.getPluginManager().registerEvents(paxel, instance);
     }
 
 }
