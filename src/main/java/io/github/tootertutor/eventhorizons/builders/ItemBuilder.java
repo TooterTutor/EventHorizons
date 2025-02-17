@@ -20,7 +20,6 @@ public class ItemBuilder {
     private ItemStack itemStack;
     private List<String> lore = new ArrayList<>();
     private String nameColor = "#FFF";
-    private List<String> loreColor = new ArrayList<>();
     private final Map<String, Recipe> recipes;
     private ItemMeta itemMeta;
     private final ItemDataBuilder dataBuilder;
@@ -59,7 +58,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setLoreColor(List<String> loreColor) {
-        this.loreColor = new ArrayList<>(loreColor);
+        new ArrayList<>(loreColor);
         return this;
     }
 

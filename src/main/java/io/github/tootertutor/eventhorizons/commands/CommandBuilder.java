@@ -11,10 +11,7 @@ import org.bukkit.plugin.Plugin;
 
 public class CommandBuilder {
     private final Map<String, CommandExecutor> commands = new HashMap<>();
-    private final Plugin plugin;
-
     public CommandBuilder(Plugin plugin) {
-        this.plugin = plugin;
     }
 
     public void registerCommand(String name, CommandExecutor executor) {

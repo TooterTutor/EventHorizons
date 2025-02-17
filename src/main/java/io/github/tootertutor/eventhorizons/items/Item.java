@@ -1,5 +1,6 @@
 package io.github.tootertutor.eventhorizons.items;
 
+import java.net.http.WebSocket.Listener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,7 +24,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
-public abstract class Item implements Keyed {
+public abstract class Item implements Listener, Keyed {
     protected final Plugin plugin;
     protected String displayName;
     protected Material material;
@@ -100,13 +101,14 @@ public abstract class Item implements Keyed {
     }
 
     /**
-     * Applies the item's metadata (display name, lore, and persistent data) to the ItemStack
+     * Applies the item's metadata (display name, lore, and persistent data) to the
+     * ItemStack
      */
     protected void applyMetadata() {
         if (itemStack == null) {
             return;
         }
-        
+
         ItemMeta meta = itemStack.getItemMeta();
         if (meta == null) {
             return;
@@ -115,7 +117,7 @@ public abstract class Item implements Keyed {
         // Apply display name
         if (displayName != null && nameColor != null) {
             meta.displayName(Component.text(displayName)
-                .color(TextColor.fromHexString(nameColor)));
+                    .color(TextColor.fromHexString(nameColor)));
         }
 
         // Apply lore
@@ -124,7 +126,7 @@ public abstract class Item implements Keyed {
             for (int i = 0; i < lore.size(); i++) {
                 String color = (loreColor != null && i < loreColor.size()) ? loreColor.get(i) : "#FFFFFF";
                 loreComponents.add(Component.text(lore.get(i))
-                    .color(TextColor.fromHexString(color)));
+                        .color(TextColor.fromHexString(color)));
             }
             meta.lore(loreComponents);
         }

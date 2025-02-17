@@ -1,12 +1,10 @@
 package io.github.tootertutor.eventhorizons;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import io.github.tootertutor.eventhorizons.commands.EHCommand;
 import io.github.tootertutor.eventhorizons.items.ItemRegistry;
-import io.github.tootertutor.eventhorizons.items.tools.Paxel;
 
 public final class EventHorizons extends JavaPlugin {
     private static EventHorizons instance;
@@ -16,9 +14,11 @@ public final class EventHorizons extends JavaPlugin {
         instance = this;
 
         getLogger().info("Initializing registries...");
+        
+        // Automatic Registration
         itemRegistry = new ItemRegistry(this);
-        registerToolItems();
-
+        itemRegistry.autoRegisterItems();
+        
         getLogger().info("Registered items: " + itemRegistry.getItems().size());
 
         // Load Commands
@@ -47,12 +47,6 @@ public final class EventHorizons extends JavaPlugin {
 
     public ItemRegistry getItemRegistry() {
         return itemRegistry; // Return the ItemRegistry instance
-    }
-
-    public void registerToolItems() {
-        Paxel paxel = new Paxel(this);
-        itemRegistry.registerItem(paxel.getId(), paxel);
-        Bukkit.getPluginManager().registerEvents(paxel, instance);
     }
 
 }

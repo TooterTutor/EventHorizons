@@ -16,8 +16,9 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 
+import io.github.tootertutor.eventhorizons.EventHorizons;
+import io.github.tootertutor.eventhorizons.interfaces.AutoRegisterItem;
 import io.github.tootertutor.eventhorizons.interfaces.IInvAction;
 import io.github.tootertutor.eventhorizons.items.Item;
 import io.papermc.paper.event.player.PlayerPickItemEvent;
@@ -26,7 +27,7 @@ import net.kyori.adventure.text.Component;
 /**
  * A Special Multi-tool that swaps to the tool best suited to mine a block.
  */
-public class Paxel extends Item implements IInvAction, Listener {
+public class Paxel extends Item implements IInvAction, Listener, AutoRegisterItem {
 
     private final Set<Material> pickaxeBlocks = getMaterials(Tag.MINEABLE_PICKAXE);
     private final Set<Material> axeBlocks = getMaterials(Tag.MINEABLE_AXE);
@@ -37,7 +38,7 @@ public class Paxel extends Item implements IInvAction, Listener {
         return new HashSet<>(tag.getValues());
     }
 
-    public Paxel(Plugin plugin) {
+    public Paxel(EventHorizons plugin) {
         super(plugin, new NamespacedKey(plugin, "paxel"));
         super.displayName = "Paxel";
         super.nameColor = "#33FFBB";
