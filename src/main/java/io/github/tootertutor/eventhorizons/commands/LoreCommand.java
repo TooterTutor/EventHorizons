@@ -17,6 +17,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
 public class LoreCommand implements CommandExecutor {
+    private static final TextColor DEFAULT_COLOR = NamedTextColor.WHITE;
     private final Plugin plugin;
 
     public LoreCommand(Plugin plugin) {
@@ -25,37 +26,44 @@ public class LoreCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // /eh lore <line> <lore> [#color]
-        if (!(sender instanceof Player player)) {
+        if (!(sender instanceof Player)) {
             sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED));
             return true;
         }
 
-        if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /eh lore <line> <lore> [#color]", NamedTextColor.RED));
+        if (args.length < 1) {
+            sendUsage(sender);
             return true;
         }
 
+        Player player = (Player) sender;
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        if (item == null || item.getType().isAir()) {
+        if (item.getType().isAir()) {
             sender.sendMessage(Component.text("You must be holding an item.", NamedTextColor.RED));
             return true;
         }
 
-        int line;
+        // Parse line number
+        int lineNumber;
         try {
-            line = Integer.parseInt(args[1]);
-            if (line < 0) throw new NumberFormatException();
+            lineNumber = Integer.parseInt(args[0]);
+            if (lineNumber < 0)
+                throw new NumberFormatException();
         } catch (NumberFormatException e) {
-            sender.sendMessage(Component.text("Invalid line number: " + args[1], NamedTextColor.RED));
+            sender.sendMessage(Component.text("Invalid line number: " + args[0], NamedTextColor.RED));
             return true;
         }
 
-        // Join the lore arguments and parse color
-        String input = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-        String[] parsed = parseColoredText(input);
-        String lore = parsed[0];
+        // Handle lore removal
+        if (args.length >= 2 && args[1].equalsIgnoreCase("remove")) {
+            return handleLoreRemoval(sender, item, lineNumber);
+        }
+
+        // Handle lore modification/addition
+        String[] loreArgs = Arrays.copyOfRange(args, 1, args.length);
+        String[] parsed = parseLoreAndColor(loreArgs);
+        String loreText = parsed[0];
         String color = parsed[1];
 
         ItemMeta meta = item.getItemMeta();
@@ -64,52 +72,84 @@ public class LoreCommand implements CommandExecutor {
             return true;
         }
 
-        List<Component> loreList = meta.hasLore() ? meta.lore() : new ArrayList<>();
-
-        // Ensure the list is large enough
-        while (loreList.size() <= line) {
-            loreList.add(Component.text(""));
+        List<Component> lore = meta.hasLore() ? new ArrayList<>(meta.lore()) : new ArrayList<>();
+        while (lore.size() <= lineNumber) {
+            lore.add(Component.empty());
         }
 
-        // Update the specific line with the new text and color
-        loreList.set(line, Component.text(lore).color(TextColor.fromHexString(color)));
-        meta.lore(loreList);
+        lore.set(lineNumber, Component.text(loreText).color(TextColor.fromHexString(color)));
+        meta.lore(lore);
         item.setItemMeta(meta);
 
         sender.sendMessage(Component.text("Updated item lore.", NamedTextColor.GREEN));
         return true;
     }
 
-    private String[] parseColoredText(String text) {
-        String[] result = new String[2]; // [text, color]
+    private boolean handleLoreRemoval(CommandSender sender, ItemStack item, int lineNumber) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !meta.hasLore()) {
+            sender.sendMessage(Component.text("No lore to remove.", NamedTextColor.RED));
+            return true;
+        }
 
-        // Match both #RRGGBB and #RGB formats at the end of the text
-        java.util.regex.Pattern pattern = java.util.regex.Pattern
-                .compile("(.*?)\\s+(#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\\s*$");
-        java.util.regex.Matcher matcher = pattern.matcher(text);
+        List<Component> lore = new ArrayList<>(meta.lore());
+        if (lineNumber >= lore.size()) {
+            sender.sendMessage(Component.text("Line number out of bounds.", NamedTextColor.RED));
+            return true;
+        }
 
-        if (matcher.find()) {
-            result[0] = matcher.group(1).trim();
-            String colorCode = matcher.group(2);
+        lore.remove(lineNumber);
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        sender.sendMessage(Component.text("Removed lore line " + lineNumber, NamedTextColor.GREEN));
+        return true;
+    }
 
-            // Convert 3-digit hex to 6-digit hex if needed
-            if (colorCode.length() == 4) {
-                String r = colorCode.substring(1, 2);
-                String g = colorCode.substring(2, 3);
-                String b = colorCode.substring(3, 4);
-                colorCode = "#" + r + r + g + g + b + b;
+    private String[] parseLoreAndColor(String[] args) {
+        String[] result = new String[2];
+        StringBuilder loreBuilder = new StringBuilder();
+        String potentialColor = null;
+
+        // Check if last argument is a color code
+        if (args.length >= 1 && isValidColorCode(args[args.length - 1])) {
+            potentialColor = args[args.length - 1];
+            // Build lore from all arguments except last
+            for (int i = 0; i < args.length - 1; i++) {
+                loreBuilder.append(args[i]).append(" ");
             }
-            result[1] = colorCode;
         } else {
-            result[0] = text;
-            result[1] = "#FFFFFF"; // Default white color
+            // Use all arguments as lore
+            potentialColor = DEFAULT_COLOR.asHexString();
+            for (String arg : args) {
+                loreBuilder.append(arg).append(" ");
+            }
         }
 
-        // Remove quotes if present
-        if (result[0].startsWith("\"") && result[0].endsWith("\"")) {
-            result[0] = result[0].substring(1, result[0].length() - 1);
+        // Remove surrounding quotes
+        String rawLore = loreBuilder.toString().trim();
+        if (rawLore.startsWith("\"") && rawLore.endsWith("\"")) {
+            rawLore = rawLore.substring(1, rawLore.length() - 1);
         }
 
+        result[0] = rawLore;
+        result[1] = normalizeColorCode(potentialColor);
         return result;
+    }
+
+    private boolean isValidColorCode(String input) {
+        return input.matches("^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$");
+    }
+
+    private String normalizeColorCode(String color) {
+        if (color.length() == 4) { // #RGB format
+            return "#" + color.charAt(1) + color.charAt(1)
+                    + color.charAt(2) + color.charAt(2)
+                    + color.charAt(3) + color.charAt(3);
+        }
+        return color;
+    }
+
+    private void sendUsage(CommandSender sender) {
+        sender.sendMessage(Component.text("Usage: /eh lore <line> [\"<text>\"] [#color|remove]", NamedTextColor.RED));
     }
 }
