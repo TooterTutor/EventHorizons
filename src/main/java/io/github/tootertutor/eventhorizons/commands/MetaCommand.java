@@ -52,7 +52,7 @@ public class MetaCommand implements CommandExecutor {
             return true;
         }
 
-        ItemDataBuilder itemDataBuilder = new ItemDataBuilder(itemMeta, plugin);
+        ItemDataBuilder itemDataBuilder = new ItemDataBuilder(plugin);
         NamespacedKey key = new NamespacedKey(EventHorizons.getInstance(), meta);
 
         switch (action) {
@@ -61,11 +61,11 @@ public class MetaCommand implements CommandExecutor {
                     sender.sendMessage(Component.text("You must provide a value to set.", NamedTextColor.RED));
                     return true;
                 }
-                itemDataBuilder.setString(meta, value);
+                itemDataBuilder.set(meta, value);
                 sender.sendMessage(Component.text("Set meta " + meta + " to " + value, NamedTextColor.GREEN));
                 break;
             case "remove":
-                itemDataBuilder.setString(meta, null); // Assuming null removes the key
+                itemDataBuilder.set(meta, null); // Assuming null removes the key
                 sender.sendMessage(Component.text("Removed meta " + meta, NamedTextColor.GREEN));
                 break;
             default:

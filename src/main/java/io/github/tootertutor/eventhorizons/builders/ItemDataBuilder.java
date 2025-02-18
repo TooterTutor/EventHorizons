@@ -1,77 +1,77 @@
 package io.github.tootertutor.eventhorizons.builders;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 public class ItemDataBuilder {
-    private PersistentDataContainer container;
-    private Plugin plugin;
+    private final Plugin plugin;
+    private final Map<NamespacedKey, Object> data = new HashMap<>();
 
     public ItemDataBuilder(Plugin plugin) {
         this.plugin = plugin;
     }
 
-    public ItemDataBuilder(ItemMeta itemMeta, Plugin plugin) {
-        this.container = itemMeta.getPersistentDataContainer();
-        this.plugin = plugin;
-    }
-
-    // Setters
-    public ItemDataBuilder setByte(String key, byte value) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        container.set(namespacedKey, PersistentDataType.BYTE, value);
+    public ItemDataBuilder fromMeta(ItemMeta meta) {
+        if (meta != null) {
+            meta.getPersistentDataContainer().getKeys().forEach(key -> {
+                data.put(key, meta.getPersistentDataContainer().get(key, getType(key)));
+            });
+        }
         return this;
     }
 
-    public ItemDataBuilder setString(String key, String value) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        container.set(namespacedKey, PersistentDataType.STRING, value);
+    public ItemDataBuilder set(String key, Object value) {
+        NamespacedKey nskey = new NamespacedKey(plugin, key);
+        data.put(nskey, value);
         return this;
     }
 
-    public ItemDataBuilder setInt(String key, int value) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        container.set(namespacedKey, PersistentDataType.INTEGER, value);
-        return this;
-    }
+    public void applyTo(ItemMeta meta) {
+        if (meta == null)
+            return;
 
-    public ItemDataBuilder setBoolean(String key, boolean value) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        container.set(namespacedKey, PersistentDataType.BYTE, (byte) (value ? 1 : 0));
-        return this;
-    }
-
-    // Getters
-    public boolean hasByte(String key) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        return container.has(namespacedKey, PersistentDataType.BYTE);
-    }
-
-    public boolean hasString(String key) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        return container.has(namespacedKey, PersistentDataType.STRING);
-    }
-
-    public boolean hasInt(String key) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        return container.has(namespacedKey, PersistentDataType.INTEGER);
+        data.forEach((key, value) -> {
+            if (value instanceof Boolean) {
+                byte byteValue = (Boolean) value ? (byte) 1 : (byte) 0;
+                meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, byteValue);
+            } else if (value instanceof Byte) {
+                meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (Byte) value);
+            } else if (value instanceof String) {
+                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, (String) value);
+            } else if (value instanceof Integer) {
+                meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, (Integer) value);
+            }
+            // Add other types as needed
+        });
     }
 
     public boolean hasBoolean(String key) {
-        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
-        return container.has(namespacedKey, PersistentDataType.BYTE);
+        NamespacedKey nskey = new NamespacedKey(plugin, key);
+        Object value = data.get(nskey);
+        return value instanceof Boolean || value instanceof Byte;
     }
 
-    // Builder
-    public PersistentDataContainer build() {
-        return container;
+    // Add general has() method for any key
+    public boolean has(String key) {
+        return data.containsKey(new NamespacedKey(plugin, key));
     }
 
-    public void register() {
-        // Implementation of the register method
-        // Add logic to register the item
+    // Update getType to handle boolean-as-byte
+    private PersistentDataType<?, ?> getType(NamespacedKey key) {
+        Object value = data.get(key);
+        if (value instanceof Boolean || (value instanceof Byte && (Byte) value <= 1)) {
+            return PersistentDataType.BYTE;
+        }
+        if (value instanceof String)
+            return PersistentDataType.STRING;
+        if (value instanceof Integer)
+            return PersistentDataType.INTEGER;
+        return null;
     }
+
 }

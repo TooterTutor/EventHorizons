@@ -15,7 +15,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import io.github.tootertutor.eventhorizons.builders.ItemDataBuilder;
@@ -40,6 +39,8 @@ public abstract class Item implements Listener, Keyed {
     protected Item(Plugin plugin, NamespacedKey key) {
         this.plugin = plugin;
         this.key = key;
+        this.itemDataBuilder = new ItemDataBuilder(plugin);
+        setupBasePersistentData();
         updateItemText();
     }
 
@@ -64,7 +65,7 @@ public abstract class Item implements Listener, Keyed {
                 this.lore = new ArrayList<>();
             }
 
-            this.itemDataBuilder = new ItemDataBuilder(meta, plugin);
+            this.itemDataBuilder = new ItemDataBuilder(plugin);
         } else {
             this.displayName = "Unknown Item";
             this.lore = new ArrayList<>();
@@ -76,6 +77,11 @@ public abstract class Item implements Listener, Keyed {
         this.recipes = new HashMap<>();
         this.textHandler = new ItemTextHandler(this.itemStack);
         updateItemText();
+    }
+
+    private void setupBasePersistentData() {
+        // Automatic identification tag
+        itemDataBuilder.set(key.getKey(), true);
     }
 
     @Override
@@ -131,14 +137,8 @@ public abstract class Item implements Listener, Keyed {
             meta.lore(loreComponents);
         }
 
-        // Apply persistent data
-        if (itemDataBuilder != null) {
-            for (NamespacedKey key : itemDataBuilder.build().getKeys()) {
-                byte value = itemDataBuilder.build().get(key, PersistentDataType.BYTE);
-                meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, value);
-            }
-
-        }
+        // Apply persistent data through builder
+        itemDataBuilder.applyTo(meta);
 
         itemStack.setItemMeta(meta);
     }
@@ -234,12 +234,20 @@ public abstract class Item implements Listener, Keyed {
         return new ArrayList<>(recipes.values());
     }
 
-    public boolean has(String key) {
-        return itemDataBuilder.hasByte(key);
+    public boolean isItem(ItemStack item) {
+        if (item == null || !item.hasItemMeta())
+            return false;
+        ItemMeta meta = item.getItemMeta();
+        // Directly check if the PersistentDataContainer has the item's key
+        return meta.getPersistentDataContainer().has(this.key);
     }
 
-    public void add(String key) {
-        itemDataBuilder.setByte(key, (byte) 1);
+    public void copyItemMeta(ItemStack source, ItemStack target) {
+        ItemMeta sourceMeta = source.getItemMeta();
+        if (sourceMeta != null) {
+            // Copy display name, lore, and PDC
+            target.setItemMeta(sourceMeta.clone());
+        }
     }
 
     @Override

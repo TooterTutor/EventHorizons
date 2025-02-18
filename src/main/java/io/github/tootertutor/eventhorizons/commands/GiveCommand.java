@@ -55,16 +55,6 @@ public class GiveCommand implements CommandExecutor {
         ItemStack itemStack = item.getItemStack();
         itemStack.setAmount(amount);
 
-        // // Set PersistentDataContainer using ItemDataBuilder
-        // ItemMeta meta = itemStack.getItemMeta();
-        // if (meta != null) {
-        // ItemDataBuilder itemDataBuilder = new ItemDataBuilder(meta, plugin);
-        // itemDataBuilder.setByte(item.getId().getKey(), (byte) 1); // Use getKey() to
-        // get the string representation
-        // itemStack.setItemMeta(meta);
-        // item.updateItemText(); // Ensure lore colors are applied correctly
-        // }
-
         // Give the item to the player
         target.getInventory().addItem(itemStack);
         sender.sendMessage(Component.text("Gave " + amount + "x " + item.getName() + " to " + target.getName(),

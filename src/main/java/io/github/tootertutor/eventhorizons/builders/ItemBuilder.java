@@ -62,34 +62,6 @@ public class ItemBuilder {
         return this;
     }
 
-    public ItemBuilder addPersistentData(String key, byte value) {
-        if (itemStack != null && itemStack.getItemMeta() != null) {
-            dataBuilder.setByte(key, value);
-        }
-        return this;
-    }
-
-    public ItemBuilder addPersistentData(String key, String value) {
-        if (itemStack != null && itemStack.getItemMeta() != null) {
-            dataBuilder.setString(key, value);
-        }
-        return this;
-    }
-
-    public ItemBuilder addPersistentData(String key, int value) {
-        if (itemStack != null && itemStack.getItemMeta() != null) {
-            dataBuilder.setInt(key, value);
-        }
-        return this;
-    }
-
-    public ItemBuilder addPersistentData(String key, boolean value) {
-        if (itemStack != null && itemStack.getItemMeta() != null) {
-            dataBuilder.setBoolean(key, value);
-        }
-        return this;
-    }
-
     public ItemBuilder addRecipe(String key, Recipe recipe) {
         this.recipes.put(key, recipe);
         return this;

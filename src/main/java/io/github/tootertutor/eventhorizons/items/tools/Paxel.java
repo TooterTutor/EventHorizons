@@ -47,16 +47,10 @@ public class Paxel extends Item implements IInvAction, Listener, AutoRegisterIte
         super.loreColor = Arrays.asList("#00BBCC", "#00BBCC", "#00BBCC");
         super.material = Material.DIAMOND_PICKAXE;
         super.itemStack = new ItemStack(material);
-        applyMetadata();
-    }
 
-    /**
-     * Check if an ItemStack is a Paxel
-     */
-    public boolean isPaxel(ItemStack itemStack) {
-        if (itemStack == null || !itemStack.hasItemMeta())
-            return false;
-        return itemStack.getItemMeta() != null && itemStack.getItemMeta().getPersistentDataContainer() != null;
+        // Add custom PDC data
+        itemDataBuilder.set("paxel", true);
+        applyMetadata();
     }
 
     private Material getToolMaterial(ItemStack item, Material blockType) {
@@ -95,7 +89,7 @@ public class Paxel extends Item implements IInvAction, Listener, AutoRegisterIte
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (!isPaxel(item)) {
+        if (!isItem(item)) {
             return;
         }
 
@@ -113,8 +107,11 @@ public class Paxel extends Item implements IInvAction, Listener, AutoRegisterIte
 
         // Only switch if not already an axe
         if (item.getType() != axeType) {
-            item.setType(axeType);
+            ItemStack newAxe = item.withType(axeType);
+            copyItemMeta(item, newAxe);
+            player.getInventory().setItemInMainHand(newAxe);
         }
+
     }
 
     @EventHandler
@@ -122,15 +119,18 @@ public class Paxel extends Item implements IInvAction, Listener, AutoRegisterIte
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        if (!isPaxel(item))
+        if (!isItem(item))
             return;
 
         Material blockType = event.getBlock().getType();
         Material toolType = getToolMaterial(item, blockType);
 
         if (toolType != null && toolType != item.getType()) {
-            item.setType(toolType);
+            ItemStack newTool = item.withType(toolType);
+            copyItemMeta(item, newTool);
+            player.getInventory().setItemInMainHand(newTool);
         }
+
     }
 
     @EventHandler
