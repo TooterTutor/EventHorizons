@@ -117,7 +117,7 @@ public class Paxel extends Item implements IInvAction, Listener, AutoRegisterIte
     @EventHandler
     public void onBlockDamage(BlockDamageEvent event) {
         Player player = event.getPlayer();
-        ItemStack item = player.getInventory().getItemInMainHand();
+        ItemStack item = event.getItemInHand();
 
         if (!isItem(item))
             return;
