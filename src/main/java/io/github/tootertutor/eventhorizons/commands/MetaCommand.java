@@ -1,20 +1,27 @@
 package io.github.tootertutor.eventhorizons.commands;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import io.github.tootertutor.eventhorizons.EventHorizons;
-import io.github.tootertutor.eventhorizons.builders.ItemDataBuilder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public class MetaCommand implements CommandExecutor {
+public class MetaCommand implements CommandExecutor, TabCompleter {
     private final Plugin plugin;
 
     public MetaCommand(Plugin plugin) {
@@ -23,57 +30,143 @@ public class MetaCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // /eh meta <set|remove> <meta> <value>
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED));
-            return true;
-        }
+        if (!(sender instanceof Player player))
+            return false;
+        if (args.length < 1)
+            return sendUsage(sender);
 
-        if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /eh meta <set|remove> <meta> [value]", NamedTextColor.RED));
-            return true;
-        }
-
-        Player player = (Player) sender;
         ItemStack item = player.getInventory().getItemInMainHand();
-
-        if (item == null || item.getType().isAir()) {
-            sender.sendMessage(Component.text("You must be holding an item.", NamedTextColor.RED));
+        if (item.getType().isAir()) {
+            sender.sendMessage(Component.text("Hold an item first", NamedTextColor.RED));
             return true;
         }
 
-        String action = args[1].toLowerCase();
-        String meta = args[2];
-        String value = args.length > 3 ? args[3] : null;
-
-        ItemMeta itemMeta = item.getItemMeta();
-        if (itemMeta == null) {
-            sender.sendMessage(Component.text("This item cannot have meta data.", NamedTextColor.RED));
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null)
             return true;
-        }
 
-        ItemDataBuilder itemDataBuilder = new ItemDataBuilder(plugin);
-        NamespacedKey key = new NamespacedKey(EventHorizons.getInstance(), meta);
-
+        String action = args[0].toLowerCase();
         switch (action) {
-            case "set":
-                if (value == null) {
-                    sender.sendMessage(Component.text("You must provide a value to set.", NamedTextColor.RED));
-                    return true;
-                }
-                itemDataBuilder.set(meta, value);
-                sender.sendMessage(Component.text("Set meta " + meta + " to " + value, NamedTextColor.GREEN));
-                break;
-            case "remove":
-                itemDataBuilder.set(meta, null); // Assuming null removes the key
-                sender.sendMessage(Component.text("Removed meta " + meta, NamedTextColor.GREEN));
-                break;
-            default:
-                sender.sendMessage(Component.text("Invalid action: " + action, NamedTextColor.RED));
-                return true;
+            case "set" -> handleSet(sender, meta, args);
+            case "remove" -> handleRemove(sender, meta, args);
+            case "list" -> handleList(sender, meta);
+            default -> sendUsage(sender);
         }
 
-        item.setItemMeta(itemMeta);
+        item.setItemMeta(meta);
+        return true;
+    }
+
+    private void handleSet(CommandSender sender, ItemMeta meta, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /eh meta set <key> <value>", NamedTextColor.RED));
+            return;
+        }
+
+        String key = args[1];
+        String value = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+        Object parsed = parseValue(value);
+
+        if (parsed == null) {
+            sender.sendMessage(Component.text("Invalid value: " + value, NamedTextColor.RED));
+            return;
+        }
+
+        NamespacedKey nskey = new NamespacedKey(EventHorizons.getInstance(), key);
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+
+        if (parsed instanceof Boolean bool) {
+            container.set(nskey, PersistentDataType.BYTE, (byte) (bool ? 1 : 0));
+        } else if (parsed instanceof Byte b) {
+            container.set(nskey, PersistentDataType.BYTE, b);
+        } else if (parsed instanceof Integer i) {
+            container.set(nskey, PersistentDataType.INTEGER, i);
+        } else if (parsed instanceof Float f) {
+            container.set(nskey, PersistentDataType.FLOAT, f);
+        } else if (parsed instanceof Double d) {
+            container.set(nskey, PersistentDataType.DOUBLE, d);
+        } else if (parsed instanceof String s) {
+            container.set(nskey, PersistentDataType.STRING, s);
+        }
+
+        sender.sendMessage(Component.text("Set " + key + " = " + value, NamedTextColor.GREEN));
+    }
+
+    private void handleRemove(CommandSender sender, ItemMeta meta, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /eh meta remove <key>", NamedTextColor.RED));
+            return;
+        }
+
+        NamespacedKey key = new NamespacedKey(EventHorizons.getInstance(), args[1]);
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+        boolean hadKey = container.has(key);
+        container.remove(key);
+
+        if (hadKey) {
+            sender.sendMessage(Component.text("Removed " + key.getKey(), NamedTextColor.GREEN));
+        } else {
+            sender.sendMessage(Component.text("Key not found", NamedTextColor.RED));
+        }
+    }
+
+    private void handleList(CommandSender sender, ItemMeta meta) {
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+        if (container.getKeys().isEmpty()) {
+            sender.sendMessage(Component.text("No metadata", NamedTextColor.YELLOW));
+            return;
+        }
+
+        Component msg = Component.text("Metadata:", NamedTextColor.GOLD);
+        container.getKeys().forEach(key -> msg.append(Component.text("\n- " + key.getKey(), NamedTextColor.WHITE)));
+        sender.sendMessage(msg);
+    }
+
+    private Object parseValue(String value) {
+        try {
+            if (value.equalsIgnoreCase("true"))
+                return true;
+            if (value.equalsIgnoreCase("false"))
+                return false;
+            if (value.endsWith("b"))
+                return Byte.parseByte(value.replace("b", ""));
+            if (value.endsWith("i"))
+                return Integer.parseInt(value.replace("i", ""));
+            if (value.endsWith("f"))
+                return Float.parseFloat(value.replace("f", ""));
+            if (value.endsWith("d"))
+                return Double.parseDouble(value.replace("d", ""));
+            if (value.matches("'.*'"))
+                return value.substring(1, value.length() - 1);
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
+        List<String> completions = new ArrayList<>();
+
+        if (args.length == 1) {
+            return Arrays.asList("set", "remove", "list");
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("remove") && sender instanceof Player player) {
+            return player.getInventory().getItemInMainHand().getItemMeta()
+                    .getPersistentDataContainer().getKeys().stream()
+                    .map(NamespacedKey::getKey)
+                    .collect(Collectors.toList());
+        }
+
+        return completions;
+    }
+
+    private boolean sendUsage(CommandSender sender) {
+        sender.sendMessage(Component.text("Usage:", NamedTextColor.RED)
+                .append(Component.text("\n/eh meta set <key> <value>", NamedTextColor.GRAY))
+                .append(Component.text("\n/eh meta remove <key>", NamedTextColor.GRAY))
+                .append(Component.text("\n/eh meta list", NamedTextColor.GRAY)));
         return true;
     }
 }
