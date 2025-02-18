@@ -1,7 +1,5 @@
 package io.github.tootertutor.eventhorizons.commands;
 
-import java.util.Arrays;
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,6 +13,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
 public class NameCommand implements CommandExecutor {
+    private static final TextColor DEFAULT_COLOR = NamedTextColor.WHITE;
     private final Plugin plugin;
 
     public NameCommand(Plugin plugin) {
@@ -23,28 +22,26 @@ public class NameCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // /eh name <name> [#color]
         if (!(sender instanceof Player)) {
             sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED));
             return true;
         }
 
-        if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /eh name <name> [#color]", NamedTextColor.RED));
+        if (args.length < 1) {
+            sendUsage(sender);
             return true;
         }
 
         Player player = (Player) sender;
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        if (item == null || item.getType().isAir()) {
+        if (item.getType().isAir()) {
             sender.sendMessage(Component.text("You must be holding an item.", NamedTextColor.RED));
             return true;
         }
 
-        // Join the name arguments and parse color
-        String input = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-        String[] parsed = parseColoredText(input);
+        // Join all arguments except potential color code
+        String[] parsed = parseNameAndColor(args);
         String name = parsed[0];
         String color = parsed[1];
 
@@ -61,36 +58,57 @@ public class NameCommand implements CommandExecutor {
         return true;
     }
 
-    private String[] parseColoredText(String text) {
-        String[] result = new String[2]; // [text, color]
+    private String[] parseNameAndColor(String[] args) {
+        String[] result = new String[2];
+        StringBuilder nameBuilder = new StringBuilder();
+        String potentialColor = null;
 
-        // Match both #RRGGBB and #RGB formats at the end of the text
-        java.util.regex.Pattern pattern = java.util.regex.Pattern
-                .compile("(.*?)\\s+(#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\\s*$");
-        java.util.regex.Matcher matcher = pattern.matcher(text);
-
-        if (matcher.find()) {
-            result[0] = matcher.group(1).trim();
-            String colorCode = matcher.group(2);
-
-            // Convert 3-digit hex to 6-digit hex if needed
-            if (colorCode.length() == 4) {
-                String r = colorCode.substring(1, 2);
-                String g = colorCode.substring(2, 3);
-                String b = colorCode.substring(3, 4);
-                colorCode = "#" + r + r + g + g + b + b;
+        // Check if last argument is a color code
+        if (args.length >= 2) {
+            String lastArg = args[args.length - 1];
+            if (isValidColorCode(lastArg)) {
+                potentialColor = lastArg;
+                // Process all arguments except the last one as name
+                for (int i = 0; i < args.length - 1; i++) {
+                    nameBuilder.append(args[i]).append(" ");
+                }
             }
-            result[1] = colorCode;
-        } else {
-            result[0] = text;
-            result[1] = "#FFFFFF"; // Default white color
         }
 
-        // Remove quotes if present
-        if (result[0].startsWith("\"") && result[0].endsWith("\"")) {
-            result[0] = result[0].substring(1, result[0].length() - 1);
+        // If no color found, process all arguments as name
+        if (potentialColor == null) {
+            potentialColor = DEFAULT_COLOR.asHexString();
+            for (String arg : args) {
+                nameBuilder.append(arg).append(" ");
+            }
         }
 
+        String rawName = nameBuilder.toString().trim();
+
+        // Remove surrounding quotes if present
+        if (rawName.startsWith("\"") && rawName.endsWith("\"")) {
+            rawName = rawName.substring(1, rawName.length() - 1);
+        }
+
+        result[0] = rawName;
+        result[1] = normalizeColorCode(potentialColor);
         return result;
+    }
+
+    private boolean isValidColorCode(String input) {
+        return input.matches("^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$");
+    }
+
+    private String normalizeColorCode(String color) {
+        if (color.length() == 4) { // #RGB format
+            return "#" + color.charAt(1) + color.charAt(1)
+                    + color.charAt(2) + color.charAt(2)
+                    + color.charAt(3) + color.charAt(3);
+        }
+        return color;
+    }
+
+    private void sendUsage(CommandSender sender) {
+        sender.sendMessage(Component.text("Usage: /eh name \"<name>\" [#color]", NamedTextColor.RED));
     }
 }
