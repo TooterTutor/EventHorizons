@@ -27,7 +27,11 @@ public class ItemDataBuilder {
 
     public ItemDataBuilder set(String key, Object value) {
         NamespacedKey nskey = new NamespacedKey(plugin, key);
-        data.put(nskey, value);
+        if (value == null) {
+            data.remove(nskey);
+        } else {
+            data.put(nskey, value);
+        }
         return this;
     }
 
@@ -41,12 +45,15 @@ public class ItemDataBuilder {
                 meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, byteValue);
             } else if (value instanceof Byte) {
                 meta.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (Byte) value);
-            } else if (value instanceof String) {
-                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, (String) value);
             } else if (value instanceof Integer) {
                 meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, (Integer) value);
+            } else if (value instanceof Float) {
+                meta.getPersistentDataContainer().set(key, PersistentDataType.FLOAT, (Float) value);
+            } else if (value instanceof Double) {
+                meta.getPersistentDataContainer().set(key, PersistentDataType.DOUBLE, (Double) value);
+            } else if (value instanceof String) {
+                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, (String) value);
             }
-            // Add other types as needed
         });
     }
 
@@ -66,12 +73,16 @@ public class ItemDataBuilder {
         Object value = data.get(key);
         if (value instanceof Boolean || (value instanceof Byte && (Byte) value <= 1)) {
             return PersistentDataType.BYTE;
-        }
-        if (value instanceof String)
+        } else if (value instanceof String) {
             return PersistentDataType.STRING;
-        if (value instanceof Integer)
+        } else if (value instanceof Integer) {
             return PersistentDataType.INTEGER;
-        return null;
+        } else if (value instanceof Float) {
+            return PersistentDataType.FLOAT;
+        } else if (value instanceof Double) {
+            return PersistentDataType.DOUBLE;
+        }
+        return null; // Fallback type
     }
 
 }
