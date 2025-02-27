@@ -40,6 +40,7 @@ public abstract class Item implements Listener, Keyed {
         this.plugin = plugin;
         this.key = key;
         this.itemDataBuilder = new ItemDataBuilder(plugin);
+        this.textHandler = new ItemTextHandler(itemStack);
         setupBasePersistentData();
         updateItemText();
     }
@@ -104,6 +105,19 @@ public abstract class Item implements Listener, Keyed {
     public ItemStack getItemStack() {
         applyMetadata();
         return itemStack;
+    }
+
+    /**
+     * Creates a new ItemStack with the specified material type and copies the
+     * metadata from the current item.
+     *
+     * @param newType The new Material type for the ItemStack.
+     * @return A new ItemStack with the specified material type and copied metadata.
+     */
+    public ItemStack withType(Material newType) {
+        ItemStack newItem = new ItemStack(newType, itemStack.getAmount());
+        copyItemMeta(itemStack, newItem);
+        return newItem;
     }
 
     /**
