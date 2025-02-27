@@ -35,8 +35,6 @@ public class Rocket extends Item implements IInvAction, Listener, AutoRegisterIt
         super.material = Material.FIREWORK_ROCKET;
         super.itemStack = new ItemStack(material);
 
-        // Add custom PDC data
-        itemDataBuilder.set("infinityrocket", true);
         applyMetadata();
     }
 

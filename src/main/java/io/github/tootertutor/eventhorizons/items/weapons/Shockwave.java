@@ -60,8 +60,6 @@ public class Shockwave extends Item implements IInvAction, Listener, AutoRegiste
         super.material = Material.GOAT_HORN;
         super.itemStack = new ItemStack(material);
 
-        // Add custom PDC data
-        itemDataBuilder.set("shockwave", true);
         applyMetadata();
     }
 

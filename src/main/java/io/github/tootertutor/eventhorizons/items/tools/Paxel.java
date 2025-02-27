@@ -48,8 +48,6 @@ public class Paxel extends Item implements IInvAction, Listener, AutoRegisterIte
         super.material = Material.DIAMOND_PICKAXE;
         super.itemStack = new ItemStack(material);
 
-        // Add custom PDC data
-        itemDataBuilder.set("paxel", true);
         applyMetadata();
     }
 
@@ -126,9 +124,9 @@ public class Paxel extends Item implements IInvAction, Listener, AutoRegisterIte
         Material toolType = getToolMaterial(item, blockType);
 
         if (toolType != null && toolType != item.getType()) {
-            ItemStack newTool = item.withType(toolType);
-            copyItemMeta(item, newTool);
-            player.getInventory().setItemInMainHand(newTool);
+            // ItemStack newTool = this.withType(toolType);
+            // player.getInventory().setItemInMainHand(newTool);
+            item.setType(toolType);
         }
 
     }

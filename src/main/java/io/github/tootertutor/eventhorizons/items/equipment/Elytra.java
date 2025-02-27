@@ -31,6 +31,7 @@ public class Elytra extends Item implements Listener, AutoRegisterItem {
         super.loreColor = Arrays.asList("#00BBCC");
         super.material = Material.ELYTRA;
         super.itemStack = new ItemStack(material);
+        
         applyMetadata();
     }
 
