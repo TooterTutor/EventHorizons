@@ -14,10 +14,7 @@ import net.kyori.adventure.text.format.TextColor;
 
 public class NameCommand implements CommandExecutor {
     private static final TextColor DEFAULT_COLOR = NamedTextColor.WHITE;
-    private final Plugin plugin;
-
     public NameCommand(Plugin plugin) {
-        this.plugin = plugin;
     }
 
     @Override
@@ -96,7 +93,8 @@ public class NameCommand implements CommandExecutor {
     }
 
     private boolean isValidColorCode(String input) {
-        return input.matches("^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$");
+        // return input.matches("^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$");
+        return input.matches("^#([\\da-fA-F]{3}){1,2}?$");
     }
 
     private String normalizeColorCode(String color) {
