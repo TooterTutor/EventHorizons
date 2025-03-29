@@ -12,19 +12,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import io.github.tootertutor.eventhorizons.EventHorizons;
 import io.github.tootertutor.eventhorizons.interfaces.AutoRegisterItem;
-import io.github.tootertutor.eventhorizons.interfaces.IInvAction;
 import io.github.tootertutor.eventhorizons.items.Item;
-import io.papermc.paper.event.player.PlayerPickItemEvent;
 
-public class Rocket extends Item implements IInvAction, Listener, AutoRegisterItem {
+public class Rocket extends Item implements Listener, AutoRegisterItem {
 
     protected Rocket(EventHorizons plugin) {
         super(plugin, new NamespacedKey(plugin, "infinityrocket"));
@@ -67,18 +63,4 @@ public class Rocket extends Item implements IInvAction, Listener, AutoRegisterIt
             }
         }
     }
-
-    @EventHandler
-    public void onDropItem(PlayerDropItemEvent event) {
-
-    }
-
-    @EventHandler
-    public void onPickItem(PlayerPickItemEvent event) {
-    }
-
-    @EventHandler
-    public void onSwapHands(PlayerSwapHandItemsEvent event) {
-    }
-
 }

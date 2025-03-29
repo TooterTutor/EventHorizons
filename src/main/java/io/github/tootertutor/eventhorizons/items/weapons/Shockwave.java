@@ -23,9 +23,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -33,11 +31,9 @@ import org.bukkit.util.Vector;
 
 import io.github.tootertutor.eventhorizons.EventHorizons;
 import io.github.tootertutor.eventhorizons.interfaces.AutoRegisterItem;
-import io.github.tootertutor.eventhorizons.interfaces.IInvAction;
 import io.github.tootertutor.eventhorizons.items.Item;
-import io.papermc.paper.event.player.PlayerPickItemEvent;
 
-public class Shockwave extends Item implements IInvAction, Listener, AutoRegisterItem {
+public class Shockwave extends Item implements Listener, AutoRegisterItem {
     private final Random random = new Random();
 
     private static final int MAX_RADIUS = 8; // Maximum radius for the second ring
@@ -219,17 +215,4 @@ public class Shockwave extends Item implements IInvAction, Listener, AutoRegiste
         // Damage the entity
         entity.damage(6);
     }
-
-    @Override
-    public void onDropItem(PlayerDropItemEvent event) {
-    }
-
-    @Override
-    public void onPickItem(PlayerPickItemEvent event) {
-    }
-
-    @Override
-    public void onSwapHands(PlayerSwapHandItemsEvent event) {
-    }
-
 }
