@@ -40,7 +40,7 @@ public class Rocket extends Item implements Listener, AutoRegisterItem {
         ItemStack item = event.getItem();
 
         if (isItem(item)) {
-            if (player.isGliding()) {
+            if (player.isGliding() && event.getAction() == Action.RIGHT_CLICK_AIR) {
                 player.fireworkBoost(item);
                 event.setCancelled(true);
             } else if (isItem(item) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
