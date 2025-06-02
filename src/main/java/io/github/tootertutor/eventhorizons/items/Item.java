@@ -36,6 +36,9 @@ public abstract class Item implements Listener, Keyed {
     protected ItemTextHandler textHandler;
     protected NamespacedKey key;
 
+    // New field to store placeholders
+    protected Map<String, String> placeholders = new HashMap<>();
+
     protected Item(Plugin plugin, NamespacedKey key) {
         this.plugin = plugin;
         this.key = key;
@@ -134,18 +137,22 @@ public abstract class Item implements Listener, Keyed {
             return;
         }
 
+        // Replace placeholders in displayName
+        String processedDisplayName = replacePlaceholders(displayName);
+
         // Apply display name
-        if (displayName != null && nameColor != null) {
-            meta.displayName(Component.text(displayName)
+        if (processedDisplayName != null && nameColor != null) {
+            meta.displayName(Component.text(processedDisplayName)
                     .color(TextColor.fromHexString(nameColor)));
         }
 
-        // Apply lore
+        // Replace placeholders in lore
+        List<Component> loreComponents = new ArrayList<>();
         if (lore != null && !lore.isEmpty()) {
-            List<Component> loreComponents = new ArrayList<>();
             for (int i = 0; i < lore.size(); i++) {
+                String line = replacePlaceholders(lore.get(i));
                 String color = (loreColor != null && i < loreColor.size()) ? loreColor.get(i) : "#FFFFFF";
-                loreComponents.add(Component.text(lore.get(i))
+                loreComponents.add(Component.text(line)
                         .color(TextColor.fromHexString(color)));
             }
             meta.lore(loreComponents);
@@ -155,6 +162,49 @@ public abstract class Item implements Listener, Keyed {
         itemDataBuilder.applyTo(meta);
 
         itemStack.setItemMeta(meta);
+    }
+
+    /**
+     * Replace placeholders in the input string with their corresponding values.
+     * If a placeholder has no value, it is removed from the string.
+     * @param input the input string possibly containing placeholders
+     * @return the string with placeholders replaced or removed
+     */
+    protected String replacePlaceholders(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        String result = input;
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            String placeholder = "{" + entry.getKey() + "}";
+            String value = entry.getValue();
+            if (value == null) {
+                value = "";
+            }
+            result = result.replace(placeholder, value);
+        }
+        // Remove any unreplaced placeholders (e.g. {unknown})
+        result = result.replaceAll("\\{[^}]+\\}", "");
+        return result;
+    }
+
+    /**
+     * Set the placeholders map and update the item metadata.
+     * @param placeholders the map of placeholder keys to values
+     */
+    public void setPlaceholders(Map<String, String> placeholders) {
+        this.placeholders = new HashMap<>(placeholders);
+        updateItemText();
+    }
+
+    /**
+     * Update or add a single placeholder and refresh metadata.
+     * @param key the placeholder key
+     * @param value the placeholder value
+     */
+    public void updatePlaceholder(String key, String value) {
+        this.placeholders.put(key, value);
+        updateItemText();
     }
 
     public List<String> getLore() {
