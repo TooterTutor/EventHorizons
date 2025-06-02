@@ -15,6 +15,7 @@ import org.bukkit.plugin.Plugin;
 import io.github.tootertutor.eventhorizons.utils.ColorGradientUtil;
 import io.github.tootertutor.eventhorizons.utils.ColorGradientUtil.GradientInfo;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
@@ -86,7 +87,7 @@ public class LoreCommand implements CommandExecutor {
         GradientInfo gradientInfo = ColorGradientUtil.parseGradientString(colorOrGradient);
         if (gradientInfo != null) {
             List<Component> gradientComponents = ColorGradientUtil.applyGradient(loreText, gradientInfo);
-            lore.set(lineNumber, Component.join(Component.empty(), gradientComponents));
+            lore.set(lineNumber, Component.join(JoinConfiguration.noSeparators(), gradientComponents));
         } else {
             lore.set(lineNumber, Component.text(loreText).color(TextColor.fromHexString(normalizeColorCode(colorOrGradient))));
         }
