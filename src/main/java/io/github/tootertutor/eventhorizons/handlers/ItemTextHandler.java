@@ -1,155 +1,91 @@
 package io.github.tootertutor.eventhorizons.handlers;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 
+/**
+ * Refactored ItemTextHandler delegating displayName and lore handling to dedicated handlers.
+ */
 public class ItemTextHandler {
 
-    private final ItemStack item;
+    private final DisplayNameHandler displayNameHandler;
+    private final LoreHandler loreHandler;
 
     public ItemTextHandler(ItemStack item) {
-        this.item = item;
+        this.displayNameHandler = new DisplayNameHandler(item);
+        this.loreHandler = new LoreHandler(item);
     }
 
-    // Display Name Methods
+    // DisplayName methods
     public Component getDisplayName() {
-        ItemMeta meta = item.getItemMeta();
-        return (meta != null) ? meta.displayName() : null;
+        return displayNameHandler.getDisplayName();
     }
 
     public void setDisplayName(Component displayName) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.displayName(displayName);
-            item.setItemMeta(meta);
-        }
+        displayNameHandler.setDisplayName(displayName);
     }
 
     public void setDisplayName(String displayName) {
-        setDisplayName(Component.text(displayName));
+        displayNameHandler.setDisplayName(displayName);
     }
 
     public void setDisplayName(String displayName, String hexColor) {
-        setDisplayName(Component.text(displayName).color(TextColor.fromHexString(hexColor)));
+        displayNameHandler.setDisplayName(displayName, hexColor);
     }
 
     public void updateDisplayName(Component newDisplayName) {
-        setDisplayName(newDisplayName);
+        displayNameHandler.updateDisplayName(newDisplayName);
     }
 
-    public void replaceInDisplayName(Component placeholder, Component replacement) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null && meta.displayName() != null) {
-            String updatedName = meta.displayName().toString().replace(placeholder.toString(), replacement.toString());
-            meta.displayName(Component.text(updatedName));
-            item.setItemMeta(meta);
-        }
+    public void applyDisplayNameColorGradient(String startColor, String endColor) {
+        displayNameHandler.applyColorGradient(startColor, endColor);
     }
 
-    // Lore Methods
-    public List<Component> getLore() {
-        ItemMeta meta = item.getItemMeta();
-        return (meta != null) ? meta.lore() : null;
-    }
-
-    public void setLoreFromStrings(List<String> lore) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            List<Component> loreComponents = lore.stream()
-                    .map(Component::text)
-                    .collect(Collectors.toList());
-            meta.lore(loreComponents);
-            item.setItemMeta(meta);
-        }
-    }
-
-    public void setLore(List<Component> lore) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.lore(lore);
-            item.setItemMeta(meta);
-        }
-    }
-
-    public void updateLoreLine(int lineIndex, Component newText) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            List<Component> lore = meta.lore();
-            if (lore != null && lineIndex >= 0 && lineIndex < lore.size()) {
-                lore.set(lineIndex, newText);
-                meta.lore(lore);
-                item.setItemMeta(meta);
-            }
-        }
-    }
-
-    public void replaceLoreLine(int lineIndex, Component placeholder, Component replacement) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            List<Component> lore = meta.lore();
-            if (lore != null && lineIndex >= 0 && lineIndex < lore.size()) {
-                String updatedLine = lore.get(lineIndex).toString().replace(placeholder.toString(),
-                        replacement.toString());
-                lore.set(lineIndex, Component.text(updatedLine));
-                meta.lore(lore);
-                item.setItemMeta(meta);
-            }
-        }
-    }
-
-    public void addLoreLine(Component line) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            List<Component> lore = meta.lore();
-            if (lore != null) {
-                lore.add(line);
-                meta.lore(lore);
-                item.setItemMeta(meta);
-            }
-        }
-    }
-
-    public void removeLoreLine(int lineIndex) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            List<Component> lore = meta.lore();
-            if (lore != null && lineIndex >= 0 && lineIndex < lore.size()) {
-                lore.remove(lineIndex);
-                meta.lore(lore);
-                item.setItemMeta(meta);
-            }
-        }
-    }
-
-    public void clearLore() {
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.lore(null);
-            item.setItemMeta(meta);
-        }
-    }
-
-    // Utility Methods
-    public void setColoredText(Component text, String hexColor) {
-        if (hexColor != null && !hexColor.isEmpty()) {
-            TextColor color = TextColor.fromHexString(hexColor);
-            text = text.color(color);
-        }
+    public void clearDisplayName() {
+        displayNameHandler.clearDisplayName();
     }
 
     public boolean hasDisplayName() {
-        ItemMeta meta = item.getItemMeta();
-        return meta != null && meta.hasDisplayName();
+        return displayNameHandler.hasDisplayName();
+    }
+
+    // Lore methods
+    public List<Component> getLore() {
+        return loreHandler.getLore();
+    }
+
+    public void setLoreFromStrings(List<String> lore) {
+        loreHandler.setLoreFromStrings(lore);
+    }
+
+    public void setLore(List<Component> lore) {
+        loreHandler.setLore(lore);
+    }
+
+    public void updateLoreLine(int lineIndex, Component newText) {
+        loreHandler.updateLoreLine(lineIndex, newText);
+    }
+
+    public void addLoreLine(Component line) {
+        loreHandler.addLoreLine(line);
+    }
+
+    public void removeLoreLine(int lineIndex) {
+        loreHandler.removeLoreLine(lineIndex);
+    }
+
+    public void clearLore() {
+        loreHandler.clearLore();
+    }
+
+    public void applyLoreColorGradient(String startColor, String endColor) {
+        loreHandler.applyColorGradient(startColor, endColor);
     }
 
     public boolean hasLore() {
-        ItemMeta meta = item.getItemMeta();
-        return meta != null && meta.hasLore();
+        return loreHandler.hasLore();
     }
 }
