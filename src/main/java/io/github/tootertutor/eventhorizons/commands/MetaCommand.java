@@ -21,9 +21,17 @@ import io.github.tootertutor.eventhorizons.EventHorizons;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+/**
+ * Command to manipulate persistent metadata on the item in the player's main hand.
+ * Supports setting, removing, and listing metadata keys and values.
+ */
 public class MetaCommand implements CommandExecutor, TabCompleter {
     private final Plugin plugin;
 
+    /**
+     * Constructs the MetaCommand with the plugin instance.
+     * @param plugin The plugin instance.
+     */
     public MetaCommand(Plugin plugin) {
         this.plugin = plugin;
     }

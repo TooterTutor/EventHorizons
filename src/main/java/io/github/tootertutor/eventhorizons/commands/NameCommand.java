@@ -1,5 +1,7 @@
 package io.github.tootertutor.eventhorizons.commands;
 
+import java.util.List;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -8,12 +10,20 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
+import io.github.tootertutor.eventhorizons.utils.ColorGradientUtil;
+import io.github.tootertutor.eventhorizons.utils.ColorGradientUtil.GradientInfo;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
+/**
+ * Command to set the display name of the item in the player's main hand.
+ * Supports optional color or color gradient.
+ */
 public class NameCommand implements CommandExecutor {
     private static final TextColor DEFAULT_COLOR = NamedTextColor.WHITE;
+
     public NameCommand(Plugin plugin) {
     }
 
@@ -37,10 +47,10 @@ public class NameCommand implements CommandExecutor {
             return true;
         }
 
-        // Join all arguments except potential color code
+        // Parse name and optional color or gradient
         String[] parsed = parseNameAndColor(args);
         String name = parsed[0];
-        String color = parsed[1];
+        String colorOrGradient = parsed[1];
 
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -48,7 +58,18 @@ public class NameCommand implements CommandExecutor {
             return true;
         }
 
-        meta.displayName(Component.text(name).color(TextColor.fromHexString(color)));
+        GradientInfo gradientInfo = ColorGradientUtil.parseGradientString(colorOrGradient);
+        if (gradientInfo != null) {
+            // Apply gradient
+            List<Component> gradientComponents = ColorGradientUtil.applyGradient(name, gradientInfo);
+            // Updated to use non-deprecated join method with JoinConfiguration and separator
+            meta.displayName(Component.join(JoinConfiguration.noSeparators(), gradientComponents));
+        } else {
+            // Apply single color
+            String normalizedColor = normalizeColorCode(colorOrGradient);
+            meta.displayName(Component.text(name).color(TextColor.fromHexString(normalizedColor)));
+        }
+
         item.setItemMeta(meta);
 
         sender.sendMessage(Component.text("Updated item name.", NamedTextColor.GREEN));
@@ -60,10 +81,12 @@ public class NameCommand implements CommandExecutor {
         StringBuilder nameBuilder = new StringBuilder();
         String potentialColor = null;
 
-        // Check if last argument is a color code
+        // Check if last argument is a color code or gradient syntax
         if (args.length >= 2) {
             String lastArg = args[args.length - 1];
-            if (isValidColorCode(lastArg)) {
+            // Fix: trim lastArg to remove trailing spaces that may affect parsing
+            lastArg = lastArg.trim();
+            if (isValidColorCode(lastArg) || ColorGradientUtil.parseGradientString(lastArg) != null) {
                 potentialColor = lastArg;
                 // Process all arguments except the last one as name
                 for (int i = 0; i < args.length - 1; i++) {
@@ -72,7 +95,7 @@ public class NameCommand implements CommandExecutor {
             }
         }
 
-        // If no color found, process all arguments as name
+        // If no color or gradient found, process all arguments as name
         if (potentialColor == null) {
             potentialColor = DEFAULT_COLOR.asHexString();
             for (String arg : args) {
@@ -88,12 +111,11 @@ public class NameCommand implements CommandExecutor {
         }
 
         result[0] = rawName;
-        result[1] = normalizeColorCode(potentialColor);
+        result[1] = potentialColor;
         return result;
     }
 
     private boolean isValidColorCode(String input) {
-        // return input.matches("^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$");
         return input.matches("^#([\\da-fA-F]{3}){1,2}?$");
     }
 
@@ -107,6 +129,6 @@ public class NameCommand implements CommandExecutor {
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage(Component.text("Usage: /eh name \"<name>\" [#color]", NamedTextColor.RED));
+        sender.sendMessage(Component.text("Usage: /eh name \"<name>\" [#color|#start-#end [>,<,<>,><]]", NamedTextColor.RED));
     }
 }

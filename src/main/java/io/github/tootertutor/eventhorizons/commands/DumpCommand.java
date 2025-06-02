@@ -16,9 +16,17 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
+/**
+ * Command to dump information about the item in the player's main hand.
+ * Displays material, amount, display name with color, lore with color, and metadata keys and values.
+ */
 public class DumpCommand implements CommandExecutor {
     private final Plugin plugin;
 
+    /**
+     * Constructs the DumpCommand with the plugin instance.
+     * @param plugin The plugin instance.
+     */
     public DumpCommand(Plugin plugin) {
         this.plugin = plugin;
     }

@@ -12,10 +12,16 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
+import io.github.tootertutor.eventhorizons.utils.ColorGradientUtil;
+import io.github.tootertutor.eventhorizons.utils.ColorGradientUtil.GradientInfo;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 
+/**
+ * Command to set or remove lore lines on the item in the player's main hand.
+ * Supports optional color or color gradient for lore lines.
+ */
 public class LoreCommand implements CommandExecutor {
     private static final TextColor DEFAULT_COLOR = NamedTextColor.WHITE;
     private final Plugin plugin;
@@ -64,7 +70,7 @@ public class LoreCommand implements CommandExecutor {
         String[] loreArgs = Arrays.copyOfRange(args, 1, args.length);
         String[] parsed = parseLoreAndColor(loreArgs);
         String loreText = parsed[0];
-        String color = parsed[1];
+        String colorOrGradient = parsed[1];
 
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -77,7 +83,14 @@ public class LoreCommand implements CommandExecutor {
             lore.add(Component.empty());
         }
 
-        lore.set(lineNumber, Component.text(loreText).color(TextColor.fromHexString(color)));
+        GradientInfo gradientInfo = ColorGradientUtil.parseGradientString(colorOrGradient);
+        if (gradientInfo != null) {
+            List<Component> gradientComponents = ColorGradientUtil.applyGradient(loreText, gradientInfo);
+            lore.set(lineNumber, Component.join(Component.empty(), gradientComponents));
+        } else {
+            lore.set(lineNumber, Component.text(loreText).color(TextColor.fromHexString(normalizeColorCode(colorOrGradient))));
+        }
+
         meta.lore(lore);
         item.setItemMeta(meta);
 
@@ -110,18 +123,21 @@ public class LoreCommand implements CommandExecutor {
         StringBuilder loreBuilder = new StringBuilder();
         String potentialColor = null;
 
-        // Check if last argument is a color code
-        if (args.length >= 1 && isValidColorCode(args[args.length - 1])) {
-            potentialColor = args[args.length - 1];
-            // Build lore from all arguments except last
-            for (int i = 0; i < args.length - 1; i++) {
-                loreBuilder.append(args[i]).append(" ");
-            }
-        } else {
-            // Use all arguments as lore
-            potentialColor = DEFAULT_COLOR.asHexString();
-            for (String arg : args) {
-                loreBuilder.append(arg).append(" ");
+        // Check if last argument is a color code or gradient syntax
+        if (args.length >= 1) {
+            String lastArg = args[args.length - 1];
+            if (isValidColorCode(lastArg) || ColorGradientUtil.parseGradientString(lastArg) != null) {
+                potentialColor = lastArg;
+                // Build lore from all arguments except last
+                for (int i = 0; i < args.length - 1; i++) {
+                    loreBuilder.append(args[i]).append(" ");
+                }
+            } else {
+                // Use all arguments as lore
+                potentialColor = DEFAULT_COLOR.asHexString();
+                for (String arg : args) {
+                    loreBuilder.append(arg).append(" ");
+                }
             }
         }
 
@@ -132,7 +148,7 @@ public class LoreCommand implements CommandExecutor {
         }
 
         result[0] = rawLore;
-        result[1] = normalizeColorCode(potentialColor);
+        result[1] = potentialColor;
         return result;
     }
 
@@ -150,6 +166,6 @@ public class LoreCommand implements CommandExecutor {
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage(Component.text("Usage: /eh lore <line> [\"<text>\"] [#color|remove]", NamedTextColor.RED));
+        sender.sendMessage(Component.text("Usage: /eh lore <line|remove> [\"<text>\"] [#color|#start-#end [>,<,<>,><]]", NamedTextColor.RED));
     }
 }

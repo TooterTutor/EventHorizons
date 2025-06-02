@@ -13,16 +13,27 @@ import org.bukkit.command.TabCompleter;
 import io.github.tootertutor.eventhorizons.EventHorizons;
 import io.github.tootertutor.eventhorizons.items.ItemRegistry;
 
+/**
+ * Main command handler for /eh command.
+ * Registers subcommands and handles tab completion.
+ */
 public class EHCommand implements CommandExecutor, TabCompleter {
     private final CommandBuilder commandBuilder;
     private final EventHorizons plugin;
 
+    /**
+     * Constructs the EHCommand with the plugin instance.
+     * @param plugin The EventHorizons plugin instance.
+     */
     public EHCommand(EventHorizons plugin) {
         this.plugin = plugin;
         commandBuilder = new CommandBuilder(plugin);
         registerCommands();
     }
 
+    /**
+     * Registers all subcommands.
+     */
     private void registerCommands() {
         commandBuilder.registerCommand("give", new GiveCommand(plugin));
         commandBuilder.registerCommand("lore", new LoreCommand(plugin));
@@ -41,11 +52,8 @@ public class EHCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> completions = new ArrayList<>();
-
         if (args.length == 1) {
-            // String[] subCommands = { "give", "lore", "name", "meta", "dump", "world" };
-            String[] subCommands = { "give", "lore", "name", "meta", "dump"};
+            String[] subCommands = { "give", "lore", "name", "meta", "dump" };
             return filterCompletions(subCommands, args[0]);
         }
 
@@ -73,7 +81,7 @@ public class EHCommand implements CommandExecutor, TabCompleter {
                 //     }
             }
         }
-        return completions;
+        return new ArrayList<>();
     }
 
     private List<String> filterCompletions(String[] options, String input) {

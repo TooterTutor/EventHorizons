@@ -13,9 +13,17 @@ import io.github.tootertutor.eventhorizons.items.Item;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+/**
+ * Command to give a specified item to a player.
+ * Usage: /eh give <player> <item> <amount>
+ */
 public class GiveCommand implements CommandExecutor {
     private final Plugin plugin;
 
+    /**
+     * Constructs the GiveCommand with the plugin instance.
+     * @param plugin The plugin instance.
+     */
     public GiveCommand(Plugin plugin) {
         this.plugin = plugin;
     }
@@ -57,7 +65,7 @@ public class GiveCommand implements CommandExecutor {
 
         // Give the item to the player
         target.getInventory().addItem(itemStack);
-        sender.sendMessage(Component.text("Gave " + amount + "x " + item.getName() + " to " + target.getName(),
+        sender.sendMessage(Component.text("Gave " + amount + "x " + item.getKey() + " to " + target.getName(),
                 NamedTextColor.GREEN));
         return true;
     }
